@@ -178,7 +178,7 @@ class PromptManager:
             return "天气信息获取失败"
 
         except Exception as e:
-            self.logger.bind(tag=TAG).error(f"获取天气信息失败: {e}")
+            self.logger.bind(tag=TAG).error(f"Failed to retrieve weather information: {e}")
             return "天气信息获取失败"
 
     def update_context_info(self, conn, client_ip: str):
@@ -195,11 +195,11 @@ class PromptManager:
                     self.context_data = self.context_provider.fetch_all(conn.device_id)
                 else:
                     self.context_data = ""
-                
-            self.logger.bind(tag=TAG).debug(f"上下文信息更新完成")
+
+            self.logger.bind(tag=TAG).debug(f"Context information update completed")
 
         except Exception as e:
-            self.logger.bind(tag=TAG).error(f"更新上下文信息失败: {e}")
+            self.logger.bind(tag=TAG).error(f"Failed to update context information: {e}")
 
     def build_enhanced_prompt(
         self, user_prompt: str, device_id: str, client_ip: str = None, *args, **kwargs
@@ -251,10 +251,10 @@ class PromptManager:
                 self.CacheType.DEVICE_PROMPT, device_cache_key, enhanced_prompt
             )
             self.logger.bind(tag=TAG).info(
-                f"构建增强提示词成功，长度: {len(enhanced_prompt)}"
+                f"Enhanced prompt words successfully constructed, length: {len(enhanced_prompt)}"
             )
             return enhanced_prompt
 
         except Exception as e:
-            self.logger.bind(tag=TAG).error(f"构建增强提示词失败: {e}")
+            self.logger.bind(tag=TAG).error(f"Failed to build enhanced prompt words: {e}")
             return user_prompt

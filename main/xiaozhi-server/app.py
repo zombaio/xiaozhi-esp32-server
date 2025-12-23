@@ -47,9 +47,9 @@ async def main():
     check_ffmpeg_installed()
     config = load_config()
 
-    # auth_key优先级：配置文件server.auth_key > manager-api.secret > 自动生成
-    # auth_key用于jwt认证，比如视觉分析接口的jwt认证、ota接口的token生成与websocket认证
-    # 获取配置文件中的auth_key
+    # auth_key priority: configuration file server.auth_key > manager-api.secret > automatically generated
+    # auth_key is used for JWT authentication, such as JWT authentication for visual analytics interfaces, token generation for OTA interfaces, and WebSocket authentication
+    # Retrieve auth_key from the configuration file
     auth_key = config["server"].get("auth_key", "")
     
     # 验证auth_key，无效则尝试使用manager-api.secret
@@ -64,14 +64,14 @@ async def main():
     # 添加 stdin 监控任务
     stdin_task = asyncio.create_task(monitor_stdin())
 
-    # 启动全局GC管理器（5分钟清理一次）
+    # Start the global GC manager (clean every 5 minutes).
     gc_manager = get_gc_manager(interval_seconds=300)
     await gc_manager.start()
 
-    # 启动 WebSocket 服务器
+    # Start the WebSocket server
     ws_server = WebSocketServer(config)
     ws_task = asyncio.create_task(ws_server.start())
-    # 启动 Simple http 服务器
+    # Start Simple HTTP Server
     ota_server = SimpleHttpServer(config)
     ota_task = asyncio.create_task(ota_server.start())
 
@@ -79,12 +79,12 @@ async def main():
     port = int(config["server"].get("http_port", 8003))
     if not read_config_from_api:
         logger.bind(tag=TAG).info(
-            "OTA接口是\t\thttp://{}:{}/xiaozhi/ota/",
+            "OTA interface is\t\thttp://{}:{}/xiaozhi/ota/",
             get_local_ip(),
             port,
         )
     logger.bind(tag=TAG).info(
-        "视觉分析接口是\thttp://{}:{}/mcp/vision/explain",
+        "Visual analysis interface is\thttp://{}:{}/mcp/vision/explain",
         get_local_ip(),
         port,
     )
@@ -92,40 +92,40 @@ async def main():
     if mcp_endpoint is not None and "你" not in mcp_endpoint:
         # 校验MCP接入点格式
         if validate_mcp_endpoint(mcp_endpoint):
-            logger.bind(tag=TAG).info("mcp接入点是\t{}", mcp_endpoint)
+            logger.bind(tag=TAG).info("MCP access point is\t{}", mcp_endpoint)
             # 将mcp计入点地址转成调用点
             mcp_endpoint = mcp_endpoint.replace("/mcp/", "/call/")
             config["mcp_endpoint"] = mcp_endpoint
         else:
-            logger.bind(tag=TAG).error("mcp接入点不符合规范")
+            logger.bind(tag=TAG).error("The MCP access point does not conform to the specifications")
             config["mcp_endpoint"] = "你的接入点 websocket地址"
 
-    # 获取WebSocket配置，使用安全的默认值
+    # Get the WebSocket configuration and use the safe default values.
     websocket_port = 8000
     server_config = config.get("server", {})
     if isinstance(server_config, dict):
         websocket_port = int(server_config.get("port", 8000))
 
     logger.bind(tag=TAG).info(
-        "Websocket地址是\tws://{}:{}/xiaozhi/v1/",
+        "The WebSocket address is\tws://{}:{}/xiaozhi/v1/",
         get_local_ip(),
         websocket_port,
     )
 
     logger.bind(tag=TAG).info(
-        "=======上面的地址是websocket协议地址，请勿用浏览器访问======="
+        "=== The address above is a WebSocket protocol address; please do not access it using a browser ==="
     )
     logger.bind(tag=TAG).info(
-        "如想测试websocket请用谷歌浏览器打开test目录下的test_page.html"
+        "To test WebSocket, please open the test_page.html file located in the test directory using Google Chrome."
     )
     logger.bind(tag=TAG).info(
         "=============================================================\n"
     )
 
     try:
-        await wait_for_exit()  # 阻塞直到收到退出信号
+        await wait_for_exit()  # Block until an exit signal is received
     except asyncio.CancelledError:
-        print("任务被取消，清理资源中...")
+        print("Task cancelled, resources being cleaned up...")
     finally:
         # 停止全局GC管理器
         await gc_manager.stop()
@@ -142,11 +142,11 @@ async def main():
             timeout=3.0,
             return_when=asyncio.ALL_COMPLETED,
         )
-        print("服务器已关闭，程序退出。")
+        print("The server has been shut down and the program has exited")
 
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print("手动中断，程序终止。")
+        print("Manually interrupting the program will terminate it")
