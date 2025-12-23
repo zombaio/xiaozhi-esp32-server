@@ -27,10 +27,10 @@ class ASRProvider(ASRProviderBase):
         self.delete_audio_file = delete_audio_file
         
         # ASR选项配置
-        self.enable_lid = config.get("enable_lid", True)  # 自动语种检测
-        self.enable_itn = config.get("enable_itn", True)  # 逆文本归一化
-        self.language = config.get("language", None)  # 指定语种，默认自动检测
-        self.context = config.get("context", "")  # 上下文信息，用于提高识别准确率
+        self.enable_lid = config.get("enable_lid", True)  # Automatic language detection
+        self.enable_itn = config.get("enable_itn", True)  # Inverse text normalization
+        self.language = config.get("language", None)  # Specify the language; it will be automatically detected by default.
+        self.context = config.get("context", "")  # Contextual information is used to improve recognition accuracy.
         
         # 确保输出目录存在
         os.makedirs(self.output_dir, exist_ok=True)
