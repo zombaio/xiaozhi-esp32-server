@@ -152,7 +152,7 @@ async def handle_mcp_message(conn, mcp_client: MCPClient, payload: dict):
                     return
 
                 logger.bind(tag=TAG).info(
-                    f"客户端设备支持的工具数量: {len(tools_data)}"
+                    f"Number of tools supported by client devices: {len(tools_data)}"
                 )
 
                 for i, tool in enumerate(tools_data):

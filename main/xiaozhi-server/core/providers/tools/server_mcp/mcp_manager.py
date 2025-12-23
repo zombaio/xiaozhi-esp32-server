@@ -29,7 +29,7 @@ class ServerMCPManager:
         if not os.path.exists(self.config_path):
             self.config_path = ""
             logger.bind(tag=TAG).warning(
-                f"请检查mcp服务配置文件：data/.mcp_server_settings.json"
+                f"Please check the MCP service configuration file：data/.mcp_server_settings.json"
             )
         self.clients: Dict[str, ServerMCPClient] = {}
         self.tools = []

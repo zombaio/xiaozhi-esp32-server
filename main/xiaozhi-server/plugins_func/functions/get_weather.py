@@ -25,7 +25,7 @@ GET_WEATHER_FUNCTION_DESC = {
                 },
                 "lang": {
                     "type": "string",
-                    "description": "返回用户使用的语言code，例如zh_CN/zh_HK/en_US/ja_JP等，默认zh_CN",
+                    "description": "Returns the language code used by the user, such as zh_CN/zh_HK/en_US/ja_JP, etc., with zh_CN as the default",
                 },
             },
             "required": ["lang"],
@@ -40,7 +40,7 @@ HEADERS = {
     )
 }
 
-# 天气代码 https://dev.qweather.com/docs/resource/icons/#weather-icons
+# Weather codes https://dev.qweather.com/docs/resource/icons/#weather-icons
 WEATHER_CODE_MAP = {
     "100": "晴",
     "101": "多云",
@@ -112,7 +112,7 @@ def fetch_city_info(location, api_key, api_host):
     response = requests.get(url, headers=HEADERS).json()
     if response.get("error") is not None:
         logger.bind(tag=TAG).error(
-            f"获取天气失败，原因：{response.get('error', {}).get('detail')}"
+            f"Failed to retrieve weather information，reason：{response.get('error', {}).get('detail')}"
         )
         return None
     return response.get("location", [])[0] if response.get("location") else None
@@ -204,22 +204,22 @@ def get_weather(conn, location: str = None, lang: str = "zh_CN"):
         return ActionResponse(Action.REQLLM, None, "请求失败")
     city_name, current_abstract, current_basic, temps_list = parse_weather_info(soup)
 
-    weather_report = f"您查询的位置是：{city_name}\n\n当前天气: {current_abstract}\n"
+    weather_report = f"The location you are searching for is：{city_name}\n\nCurrent weather: {current_abstract}\n"
 
     # 添加有效的当前天气参数
     if current_basic:
-        weather_report += "详细参数：\n"
+        weather_report += "Detailed parameters：\n"
         for key, value in current_basic.items():
             if value != "0":  # 过滤无效值
                 weather_report += f"  · {key}: {value}\n"
 
     # 添加7天预报
-    weather_report += "\n未来7天预报：\n"
+    weather_report += "\n7-day forecast：\n"
     for date, weather, high, low in temps_list:
         weather_report += f"{date}: {weather}，气温 {low}~{high}\n"
 
     # 提示语
-    weather_report += "\n（如需某一天的具体天气，请告诉我日期）"
+    weather_report += "\n（If you need the specific weather forecast for a particular day, please tell me the date）"
 
     # 缓存完整的天气报告
     cache_manager.set(CacheType.WEATHER, weather_cache_key, weather_report)
