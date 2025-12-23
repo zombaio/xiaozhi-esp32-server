@@ -72,7 +72,7 @@ UPDATE `ai_model_config` SET
 UPDATE `ai_model_config` SET 
 `doc_link` = 'https://github.com/rany2/edge-tts',
 `remark` = 'EdgeTTS配置说明：
-1. 使用微软Edge TTS服务
+1. Using Microsoft Edge TTS service
 2. 支持多种语言和音色
 3. 免费使用，无需注册
 4. 需要网络连接

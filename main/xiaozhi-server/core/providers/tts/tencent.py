@@ -19,7 +19,7 @@ class TTSProvider(TTSProviderBase):
             self.voice = config.get("private_voice")
         else:
             self.voice = int(config.get("voice"))
-        self.api_url = "https://tts.tencentcloudapi.com"  # 正确的API端点
+        self.api_url = "https://tts.tencentcloudapi.com"  # Correct API endpoint
         self.region = config.get("region")
         self.output_file = config.get("output_dir")
         self.audio_file_type = config.get("format", "wav")

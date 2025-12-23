@@ -17,10 +17,10 @@ TAG = __name__
 logger = setup_logging()
 
 MAX_RETRIES = 2
-RETRY_DELAY = 1  # 重试延迟（秒）
+RETRY_DELAY = 1  # Retry delay (seconds)
 
 
-# 捕获标准输出
+# Capture standard output
 class CaptureOutput:
     def __enter__(self):
         self._output = io.StringIO()
@@ -32,7 +32,7 @@ class CaptureOutput:
         self.output = self._output.getvalue()
         self._output.close()
 
-        # 将捕获到的内容通过 logger 输出
+        # The captured content will be output via the logger.
         if self.output:
             logger.bind(tag=TAG).info(self.output.strip())
 
@@ -41,18 +41,18 @@ class ASRProvider(ASRProviderBase):
     def __init__(self, config: dict, delete_audio_file: bool):
         super().__init__()
         
-        # 内存检测，要求大于2G
+        # Memory test, requires more than 2GB
         min_mem_bytes = 2 * 1024 * 1024 * 1024
         total_mem = psutil.virtual_memory().total
         if total_mem < min_mem_bytes:
-            logger.bind(tag=TAG).error(f"可用内存不足2G，当前仅有 {total_mem / (1024*1024):.2f} MB，可能无法启动FunASR")
+            logger.bind(tag=TAG).error(f"Less than 2GB of available memory，Currently only {total_mem / (1024*1024):.2f} MB，FunASR may not be able to start")
         
         self.interface_type = InterfaceType.LOCAL
         self.model_dir = config.get("model_dir")
-        self.output_dir = config.get("output_dir")  # 修正配置键名
+        self.output_dir = config.get("output_dir")  # Modify configuration key name
         self.delete_audio_file = delete_audio_file
 
-        # 确保输出目录存在
+        # Ensure the output directory exists
         os.makedirs(self.output_dir, exist_ok=True)
         with CaptureOutput():
             self.model = AutoModel(
@@ -60,7 +60,7 @@ class ASRProvider(ASRProviderBase):
                 vad_kwargs={"max_single_segment_time": 30000},
                 disable_update=True,
                 hub="hf",
-                # device="cuda:0",  # 启用GPU加速
+                # device="cuda:0",  # Enable GPU acceleration
             )
 
     async def speech_to_text(
@@ -92,7 +92,7 @@ class ASRProvider(ASRProviderBase):
                 else:
                     file_path = self.save_audio_to_file(pcm_data, session_id)
 
-                # 语音识别 - 使用线程池避免阻塞事件循环
+                # Speech Recognition - Using Thread Pools to Avoid Blocking the Event Loop
                 start_time = time.time()
                 result = await asyncio.to_thread(
                     self.model.generate,

@@ -889,7 +889,7 @@ export default {
             // 设置超时，防止加载过长时间
             const timeoutId = setTimeout(() => {
               if (this.currentAudio && this.playingVoice) {
-                this.$message.warning("音频加载时间较长，请稍后重试");
+                this.$message.warning("Audio loading is taking a long time, please try again later");
                 this.playingVoice = false;
               }
             }, 10000); // 10秒超时
