@@ -17,9 +17,9 @@ logger = setup_logging()
 
 async def wait_for_exit() -> None:
     """
-    阻塞直到收到 Ctrl‑C / SIGTERM。
-    - Unix: 使用 add_signal_handler
-    - Windows: 依赖 KeyboardInterrupt
+    Block until Ctrl‑C / SIGTERM is received.
+    - Unix: use add_signal_handler
+    - Windows: relies on KeyboardInterrupt
     """
     loop = asyncio.get_running_loop()
     stop_event = asyncio.Event()
@@ -29,8 +29,8 @@ async def wait_for_exit() -> None:
             loop.add_signal_handler(sig, stop_event.set)
         await stop_event.wait()
     else:
-        # Windows：await一个永远pending的fut，
-        # 让 KeyboardInterrupt 冒泡到 asyncio.run，以此消除遗留普通线程导致进程退出阻塞的问题
+        # Windows: await a perpetually pending fut,
+        # Make KeyboardInterrupt bubble up to asyncio.run, thus eliminating the problem of residual ordinary threads causing process exit blocking.
         try:
             await asyncio.Future()
         except KeyboardInterrupt:  # Ctrl‑C
@@ -38,9 +38,9 @@ async def wait_for_exit() -> None:
 
 
 async def monitor_stdin():
-    """监控标准输入，消费回车键"""
+    """Monitor standard input and consume Enter presses"""
     while True:
-        await ainput()  # 异步等待输入，消费回车
+        await ainput()  # Asynchronously wait for input and consume Enter presses
 
 
 async def main():
@@ -52,16 +52,16 @@ async def main():
     # Retrieve auth_key from the configuration file
     auth_key = config["server"].get("auth_key", "")
     
-    # 验证auth_key，无效则尝试使用manager-api.secret
+    # Validate auth_key; if invalid, try using manager-api.secret
     if not auth_key or len(auth_key) == 0 or "你" in auth_key:
         auth_key = config.get("manager-api", {}).get("secret", "")
-        # 验证secret，无效则生成随机密钥
+        # Validate secret; if invalid, generate a random key
         if not auth_key or len(auth_key) == 0 or "你" in auth_key:
             auth_key = str(uuid.uuid4().hex)
     
     config["server"]["auth_key"] = auth_key
 
-    # 添加 stdin 监控任务
+    # Add stdin monitor task
     stdin_task = asyncio.create_task(monitor_stdin())
 
     # Start the global GC manager (clean every 5 minutes).
@@ -90,15 +90,15 @@ async def main():
     )
     mcp_endpoint = config.get("mcp_endpoint", None)
     if mcp_endpoint is not None and "你" not in mcp_endpoint:
-        # 校验MCP接入点格式
+        # Validate MCP endpoint format
         if validate_mcp_endpoint(mcp_endpoint):
             logger.bind(tag=TAG).info("MCP access point is\t{}", mcp_endpoint)
-            # 将mcp计入点地址转成调用点
+            # Convert /mcp/ endpoint to /call/ for outgoing calls
             mcp_endpoint = mcp_endpoint.replace("/mcp/", "/call/")
             config["mcp_endpoint"] = mcp_endpoint
         else:
             logger.bind(tag=TAG).error("The MCP access point does not conform to the specifications")
-            config["mcp_endpoint"] = "你的接入点 websocket地址"
+            config["mcp_endpoint"] = "your MCP websocket endpoint address"
 
     # Get the WebSocket configuration and use the safe default values.
     websocket_port = 8000
@@ -127,16 +127,16 @@ async def main():
     except asyncio.CancelledError:
         print("Task cancelled, resources being cleaned up...")
     finally:
-        # 停止全局GC管理器
+        # Stop the global GC manager
         await gc_manager.stop()
 
-        # 取消所有任务（关键修复点）
+        # Cancel all tasks (important fix)
         stdin_task.cancel()
         ws_task.cancel()
         if ota_task:
             ota_task.cancel()
 
-        # 等待任务终止（必须加超时）
+        # Wait for tasks to terminate (include a timeout)
         await asyncio.wait(
             [stdin_task, ws_task, ota_task] if ota_task else [stdin_task, ws_task],
             timeout=3.0,

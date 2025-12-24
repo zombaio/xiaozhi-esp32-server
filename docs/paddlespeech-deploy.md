@@ -1,64 +1,76 @@
-# PaddleSpeechTTS集成xiaozhi服务
+# Integrate PaddleSpeech TTS with Xiaozhi
 
-## 重点说明
-- 优点：本地离线部署、速度快
-- 缺点：截止2025年9月25日，默认的模型是中文模型，不支持英文转语音。如果含英文会发不出声音，如需同时支持中英文需要自己训练。
+## Key notes
+- Advantages: local, offline deployment and fast runtime.
+- Limitation: as of 2025-09-25 the default PaddleSpeech models are Chinese-only and do not support English TTS. If the input contains English, no audio will be produced. To support both Chinese and English, you must train or obtain a multi-lingual model yourself.
 
-## 一、基础环境要求
-操作系统：Windows / Linux / WSL 2
+## 1. Prerequisites
+- OS: Windows / Linux / WSL2
+- Python: 3.9+ (follow Paddle official guidance for exact versions)
+- PaddlePaddle: use the official install instructions at https://www.paddlepaddle.org.cn/install
+- Dependency management: conda or venv
 
-Python 版本：3.9以上（请根据Paddle官方教程调整）
+## 2. Start the PaddleSpeech TTS server
 
-Paddle 版本：官方最新版本   ```https://www.paddlepaddle.org.cn/install```
+### 1) Clone the official PaddleSpeech repository
 
-依赖管理工具：conda 或 venv
-
-## 二、启动paddlespeech服务
-### 1.从paddlespeech官方仓库拉取源码
-```bash 
+```bash
 git clone https://github.com/PaddlePaddle/PaddleSpeech.git
 ```
-### 2.建立虚拟环境
-```bash
 
+### 2) Create a virtual environment
+
+```bash
 conda create -n paddle_env python=3.10 -y
 conda activate paddle_env
 ```
-### 3.安装paddle
-因CPU架构、GPU架构不同，请根据Paddle官方支持的python版本建立环境  
-```
-https://www.paddlepaddle.org.cn/install
-```
 
-### 4.进入paddlespeech目录
+### 3) Install Paddle (follow official guidance)
+
+Paddle installation differs by CPU/GPU and OS. Follow the official instructions for the appropriate packages and Python version:
+
+https://www.paddlepaddle.org.cn/install
+
+### 4) Change into the PaddleSpeech directory
+
 ```bash
 cd PaddleSpeech
 ```
-### 5.安装paddlespeech
+
+### 5) Install PaddleSpeech and dependencies
+
 ```bash
 pip install pytest-runner -i https://pypi.tuna.tsinghua.edu.cn/simple
 
-#以下命令使用任意一个
+# Use one of the following commands to install Paddle and paddlespeech
 pip install paddlepaddle -i https://mirror.baidu.com/pypi/simple
 pip install paddlespeech -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
-### 6.使用命令自动下载语音模型
+
+### 6) Download a model automatically by running a quick TTS command
+
 ```bash
 paddlespeech tts --input "你好，这是一次测试"
 ```
-此步骤会自动下载模型缓存至本地 .paddlespeech/models 目录
 
-### 7.修改tts_online_application.yaml配置
-参考目录 ```"PaddleSpeech\demos\streaming_tts_server\conf\tts_online_application.yaml"```
-选择```tts_online_application.yaml```文件用编辑器打开，设置```protocol```为```websocket```
+This command will automatically download the required models into `~/.paddlespeech/models`.
 
-### 8.启动服务
-```yaml
+### 7) Edit `tts_online_application.yaml` to use WebSocket
+
+File location example: `PaddleSpeech/demos/streaming_tts_server/conf/tts_online_application.yaml`
+
+Open `tts_online_application.yaml` and set `protocol: websocket`.
+
+### 8) Start the PaddleSpeech server
+
+```bash
 paddlespeech_server start --config_file ./demos/streaming_tts_server/conf/tts_online_application.yaml
-#官方默认启动命令：
+# Official default start command (alternative):
 paddlespeech_server start --config_file ./conf/tts_online_application.yaml
 ```
-请根据你的```tts_online_application.yaml```的实际目录来启动命令，看到如下日志即启动成功
+
+Start the service using the config path you edited. Successful startup emits logs similar to:
+
 ```
 Prefix dict has been built successfully.
 [2025-08-07 10:03:11,312] [   DEBUG] __init__.py:166 - Prefix dict has been built successfully.
@@ -68,11 +80,14 @@ INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8092 (Press CTRL+C to quit)
 ```
 
-## 三、修改小智的配置文件
-### 1.```main/xiaozhi-server/core/providers/tts/paddle_speech.py```
+## 3. Configure Xiaozhi to use PaddleSpeech TTS
 
-### 2.```main/xiaozhi-server/data/.config.yaml```
-使用单模块部署
+### 1) Provider code
+- `main/xiaozhi-server/core/providers/tts/paddle_speech.py`
+
+### 2) Configuration (example)
+Edit `main/xiaozhi-server/data/.config.yaml` and add a single-module TTS configuration:
+
 ```yaml
 selected_module:
   TTS: PaddleSpeechTTS
@@ -80,20 +95,24 @@ TTS:
   PaddleSpeechTTS:
       type: paddle_speech
       protocol: websocket 
-      url:  ws://127.0.0.1:8092/paddlespeech/tts/streaming  # TTS 服务的 URL 地址，指向本地服务器 [websocket默认ws://127.0.0.1:8092/paddlespeech/tts/streaming]
-      spk_id: 0  # 发音人 ID，0 通常表示默认的发音人
-      sample_rate: 24000  # 采样率 [websocket默认24000，http默认0 自动选择]
-      speed: 1.0  # 语速，1.0 表示正常语速，>1 表示加快，<1 表示减慢
-      volume: 1.0  # 音量，1.0 表示正常音量，>1 表示增大，<1 表示减小
-      save_path:   # 保存路径
+      url: ws://127.0.0.1:8092/paddlespeech/tts/streaming  # PaddleSpeech WebSocket URL
+      spk_id: 0        # Speaker ID (0 is usually the default)
+      sample_rate: 24000  # Sample rate [websocket default 24000]
+      speed: 1.0        # Speed multiplier (1.0 = normal)
+      volume: 1.0       # Volume multiplier (1.0 = normal)
+      save_path:        # Optional: path to save generated files
 ```
-### 3.启动xiaozhi服务
-```py
+
+### 3) Start Xiaozhi and test
+
+```bash
 python app.py
 ```
-打开test目录下的test_page.html，测试连接和发送消息时paddlespeech端是否有输出日志
 
-输出日志参考：
+Open `test/test_page.html` in a browser and try connecting/sending messages. Watch the PaddleSpeech server logs for incoming requests and timings.
+
+Example PaddleSpeech logs when a WebSocket streaming request is received:
+
 ```
 INFO:     127.0.0.1:44312 - "WebSocket /paddlespeech/tts/streaming" [accepted]
 INFO:     connection open
@@ -105,5 +124,13 @@ INFO:     connection open
 [2025-08-07 11:16:33,356] [    INFO] - Other info: front time: 0.06514096260070801 s, first am infer time: 0.008037090301513672 s, first voc infer time: 0.04112648963928223 s,
 [2025-08-07 11:16:33,356] [    INFO] - Complete the synthesis of the audio streams
 INFO:     connection closed
-
 ```
+
+---
+
+If you want, I can:
+- Add this English file as `docs/paddlespeech-deploy.en.md` (done),
+- Add a short link at the top of the original `docs/paddlespeech-deploy.md` pointing to the English version, or
+- Replace the original with the English content.
+
+Which option would you prefer?
