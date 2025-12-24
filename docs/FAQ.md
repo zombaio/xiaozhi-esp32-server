@@ -1,97 +1,91 @@
-# 常见问题 ❓
+# Frequently Asked Questions ❓
 
-### 1、为什么我说的话，小智识别出来很多韩文、日文、英文？🇰🇷
+### 1) Why is my speech sometimes recognized as Korean, Japanese, or English? 🇰🇷🇯🇵🇬🇧
 
-建议：检查一下`models/SenseVoiceSmall`是否已经有`model.pt`
-文件，如果没有就要下载，查看这里[下载语音识别模型文件](Deployment.md#模型文件)
+Suggestion: Check that `models/SenseVoiceSmall` contains `model.pt`. If it is missing, download the model files — see the "Model files" section in `Deployment.md`.
 
-### 2、为什么会出现"TTS 任务出错 文件不存在"？📁
+### 2) Why do I see "TTS task error: file not found"? 📁
 
-建议：检查一下是否正确使用`conda` 安装了`libopus`和`ffmpeg`库。
+Suggestion: Make sure `libopus` and `ffmpeg` are installed correctly (we recommend using `conda`). To install:
 
-如果没有安装，就安装
-
-```
-conda install conda-forge::libopus
-conda install conda-forge::ffmpeg
+```bash
+conda install -c conda-forge libopus
+conda install -c conda-forge ffmpeg
 ```
 
-### 3、TTS 经常失败，经常超时 ⏰
+### 3) TTS frequently fails or times out ⏰
 
-建议：如果 `EdgeTTS` 经常失败，请先检查是否使用了代理（梯子）。如果使用了，请尝试关闭代理后再试；  
-如果用的是火山引擎的豆包 TTS，经常失败时建议使用付费版本，因为测试版本仅支持 2 个并发。
+Suggestion: If `EdgeTTS` often fails, check whether you are using a network proxy or VPN — try disabling it. If you are using Volcengine Doubao TTS and see frequent failures, consider the paid tier because the free/test tier supports only 2 concurrent sessions.
 
-### 4、使用Wifi能连接自建服务器，但是4G模式却接不上 🔐
+### 4) Wi‑Fi can connect to my self-hosted server, but 4G cannot 🔐
 
-原因：虾哥的固件，4G模式需要使用安全连接。
+Cause: Some device firmware requires a secure (HTTPS) connection when operating over 4G.
 
-解决方法：目前有两种方法可以解决。任选一种：
+Solutions (choose one):
 
-1、改代码。参考这个视频解决 https://www.bilibili.com/video/BV18MfTYoE85
+1. Modify the device firmware — see this walkthrough video: https://www.bilibili.com/video/BV18MfTYoE85
+2. Configure Nginx with an SSL certificate — see the tutorial: https://icnt94i5ctj4.feishu.cn/docx/GnYOdMNJOoRCljx1ctecsj9cnRe
 
-2、使用nginx配置ssl证书。参考教程 https://icnt94i5ctj4.feishu.cn/docx/GnYOdMNJOoRCljx1ctecsj9cnRe
+### 5) How can I improve Xiaozhi's response speed? ⚡
 
-### 5、如何提高小智对话响应速度？ ⚡
+The project defaults to a low-cost setup so it is easier to get started. Once it runs correctly, you can optimize for speed by swapping components. Since v0.5.2 the project supports streaming configurations, which can reduce response latency by ~2.5s compared to previous setups.
 
-本项目默认配置为低成本方案，建议初学者先使用默认免费模型，解决"跑得动"的问题，再优化"跑得快"。  
-如需提升响应速度，可尝试更换各组件。自`0.5.2`版本起，项目支持流式配置，相比早期版本，响应速度提升约`2.5秒`，显著改善用户体验。
+| Component | Free beginner setup | Streaming / Faster option |
+|:---:|:---|:---|
+| ASR (speech recognition) | FunASR (local) | 👍 XunfeiStreamASR (streaming)
+| LLM (large language model) | glm-4-flash | 👍 qwen-flash
+| VLLM (vision LLM) | glm-4v-flash | 👍 qwen2.5-vl-3b-instructh
+| TTS (text-to-speech) | ✅ LinkeraiTTS (streaming) | 👍 HuoshanDoubleStreamTTS (streaming)
+| Intent (intent detection) | function_call | function_call
+| Memory (memory subsystem) | mem_local_short | mem_local_short
 
-| 模块名称 | 入门全免费设置 | 流式配置 |
-|:---:|:---:|:---:|
-| ASR(语音识别) | FunASR(本地) | 👍XunfeiStreamASR(讯飞流式) |
-| LLM(大模型) | glm-4-flash(智谱) | 👍qwen-flash(阿里百炼) |
-| VLLM(视觉大模型) | glm-4v-flash(智谱) | 👍qwen2.5-vl-3b-instructh(阿里百炼) |
-| TTS(语音合成) | ✅LinkeraiTTS(灵犀流式) | 👍HuoshanDoubleStreamTTS(火山流式) |
-| Intent(意图识别) | function_call(函数调用) | function_call(函数调用) |
-| Memory(记忆功能) | mem_local_short(本地短期记忆） | mem_local_short（本地短期记忆） |
+If you care about per-component latency, see the Xiaozhi performance reports and reproduce tests in your environment: https://github.com/xinnan-tech/xiaozhi-performance-research
 
-如果您关心各组件的耗时，请查阅[小智各组件性能测试报告](https://github.com/xinnan-tech/xiaozhi-performance-research)，可按报告中的测试方法在您的环境中实际测试。
+### 6) I speak slowly and Xiaozhi often interrupts me 🗣️
 
-### 6、我说话很慢，停顿时小智老是抢话 🗣️
-
-建议：在配置文件中找到如下部分，将 `min_silence_duration_ms` 的值调大（例如改为 `1000`）：
+Suggestion: Increase `min_silence_duration_ms` in your config (e.g., set it to `1000`):
 
 ```yaml
 VAD:
   SileroVAD:
     threshold: 0.5
     model_dir: models/snakers4_silero-vad
-    min_silence_duration_ms: 700  # 如果说话停顿较长，可将此值调大
+    min_silence_duration_ms: 700  # increase this if speakers pause for a long time
 ```
 
-### 7、部署相关教程
-1、[如何进行最简化部署](./Deployment.md)<br/>
-2、[如何进行全模块部署](./Deployment_all.md)<br/>
-3、[如何部署MQTT网关开启MQTT+UDP协议](./mqtt-gateway-integration.md)<br/>
-4、[如何自动拉取本项目最新代码自动编译和启动](./dev-ops-integration.md)<br/>
-5、[如何与Nginx集成](https://github.com/xinnan-tech/xiaozhi-esp32-server/issues/791)<br/>
+### 7) Deployment guides
+1. [Minimal deployment](./Deployment.md)
+2. [Full-module deployment](./Deployment_all.md)
+3. [Deploy MQTT gateway (enable MQTT+UDP)](./mqtt-gateway-integration.md)
+4. [Auto-pull, build and start (CI)](./dev-ops-integration.md)
+5. [Integrating with Nginx (discussion / issue)](https://github.com/xinnan-tech/xiaozhi-esp32-server/issues/791)
 
-### 9、编译固件相关教程
-1、[如何自己编译小智固件](./firmware-build.md)<br/>
-2、[如何基于虾哥编译好的固件修改OTA地址](./firmware-setting.md)<br/>
+### 9) Firmware build guides
+1. [How to build Xiaozhi firmware](./firmware-build.md)
+2. [How to change the OTA address in pre-built firmware](./firmware-setting.md)
 
-### 10、拓展相关教程
-1、[如何开启手机号码注册智控台](./ali-sms-integration.md)<br/>
-2、[如何集成HomeAssistant实现智能家居控制](./homeassistant-integration.md)<br/>
-3、[如何开启视觉模型实现拍照识物](./mcp-vision-integration.md)<br/>
-4、[如何部署MCP接入点](./mcp-endpoint-enable.md)<br/>
-5、[如何接入MCP接入点](./mcp-endpoint-integration.md)<br/>
-6、[MCP方法如何获取设备信息](./mcp-get-device-info.md)<br/>
-7、[如何开启声纹识别](./voiceprint-integration.md)<br/>
-8、[新闻插件源配置指南](./newsnow_plugin_config.md)<br/>
-9、[知识库ragflow集成指南](./ragflow-integration.md)<br/>
-10、[如何部署上下文源](./context-provider-integration.md)<br/>
+### 10) Integration & extension guides
+1. [Enable phone-number registration for the console](./ali-sms-integration.md)
+2. [Integrate HomeAssistant for smart home control](./homeassistant-integration.md)
+3. [Enable vision models for photo recognition](./mcp-vision-integration.md)
+4. [Deploy an MCP endpoint](./mcp-endpoint-enable.md)
+5. [How to connect to an MCP endpoint](./mcp-endpoint-integration.md)
+6. [How to get device info via MCP methods](./mcp-get-device-info.md)
+7. [Enable voiceprint (speaker recognition)](./voiceprint-integration.md)
+8. [News plugin source configuration guide](./newsnow_plugin_config.md)
+9. [Knowledge-base (ragflow) integration guide](./ragflow-integration.md)
+10. [How to deploy context providers](./context-provider-integration.md)
 
-### 11、语音克隆、本地语音部署相关教程
-1、[如何在智控台克隆音色](./huoshan-streamTTS-voice-cloning.md)<br/>
-2、[如何部署集成index-tts本地语音](./index-stream-integration.md)<br/>
-3、[如何部署集成fish-speech本地语音](./fish-speech-integration.md)<br/>
-4、[如何部署集成PaddleSpeech本地语音](./paddlespeech-deploy.md)<br/>
+### 11) Voice cloning & local TTS guides
+1. [How to clone a voice in the console](./huoshan-streamTTS-voice-cloning.md)
+2. [How to deploy index-tts local speech](./index-stream-integration.md)
+3. [How to deploy fish-speech local TTS](./fish-speech-integration.md)
+4. [How to deploy PaddleSpeech local TTS](./paddlespeech-deploy.md)
 
-### 12、性能测试教程
-1、[各组件速度测试指南](./performance_tester.md)<br/>
-2、[定期公开测试结果](https://github.com/xinnan-tech/xiaozhi-performance-research)<br/>
+### 12) Performance testing
+1. [Component speed testing guide](./performance_tester.md)
+2. [Public test results (updated periodically)](https://github.com/xinnan-tech/xiaozhi-performance-research)
 
-### 13、更多问题，可联系我们反馈 💬
+### 13) More questions / contact 💬
 
-可以在[issues](https://github.com/xinnan-tech/xiaozhi-esp32-server/issues)提交您的问题。
+Please file an issue at: https://github.com/xinnan-tech/xiaozhi-esp32-server/issues
