@@ -17,7 +17,7 @@ TAG = __name__
 logger = setup_logging()
 
 
-# 捕获标准输出
+# Capture standard output and redirect to logger
 class CaptureOutput:
     def __enter__(self):
         self._output = io.StringIO()
@@ -29,7 +29,7 @@ class CaptureOutput:
         self.output = self._output.getvalue()
         self._output.close()
 
-        # 将捕获到的内容通过 logger 输出
+        # The captured content will be output via the logger
         if self.output:
             logger.bind(tag=TAG).info(self.output.strip())
 
@@ -52,11 +52,11 @@ class ASRProvider(ASRProviderBase):
             "tokens.txt": os.path.join(self.model_dir, "tokens.txt"),
         }
 
-        # 下载并检查模型文件
+        # Download and inspect the model file
         try:
             for file_name, file_path in model_files.items():
                 if not os.path.isfile(file_path):
-                    logger.bind(tag=TAG).info(f"正在下载模型文件: {file_name}")
+                    logger.bind(tag=TAG).info(f"Downloading model file: {file_name}")
                     model_file_download(
                         model_id="pengzhendong/sherpa-onnx-sense-voice-zh-en-ja-ko-yue",
                         file_path=file_name,
@@ -64,7 +64,7 @@ class ASRProvider(ASRProviderBase):
                     )
 
                     if not os.path.isfile(file_path):
-                        raise FileNotFoundError(f"模型文件下载失败: {file_path}")
+                        raise FileNotFoundError(f"Model file download failed: {file_path}")
 
             self.model_path = model_files["model.int8.onnx"]
             self.tokens_path = model_files["tokens.txt"]
@@ -123,10 +123,10 @@ class ASRProvider(ASRProviderBase):
     async def speech_to_text(
         self, opus_data: List[bytes], session_id: str, audio_format="opus"
     ) -> Tuple[Optional[str], Optional[str]]:
-        """语音转文本主处理逻辑"""
+        """Speech-to-text main processing logic"""
         file_path = None
         try:
-            # 保存音频文件
+            # Save audio files
             start_time = time.time()
             if audio_format == "pcm":
                 pcm_data = opus_data
