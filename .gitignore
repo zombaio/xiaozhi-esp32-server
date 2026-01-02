@@ -154,6 +154,14 @@ main/manager-web/node_modules
 .env.development
 
 # model files
+# ML / model artifacts
+**/models/
+**/*.pt
+**/*.bin
+**/*.onnx
+**/*.gguf
+
+
 main/xiaozhi-server/models/SenseVoiceSmall/model.pt
 main/xiaozhi-server/models/sherpa-onnx*
 /main/xiaozhi-server/audio_ref/
