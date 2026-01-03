@@ -46,6 +46,8 @@ class ASRProvider(ASRProviderBase):
         self.model_type = config.get("model_type", "sense_voice")  # support paraformer
         self.delete_audio_file = delete_audio_file
 
+        #self.model.config.forced_decoder_ids = processor.get_decoder_prompt_ids(language = "en", task = "transcribe")
+
         logger.bind(tag=TAG).debug(f"self.model_dir: {self.model_dir}")
         logger.bind(tag=TAG).debug(f"self.output_dir: {self.output_dir}")
         logger.bind(tag=TAG).debug(f"self.model_type: {self.model_type}")
@@ -90,15 +92,15 @@ class ASRProvider(ASRProviderBase):
         with CaptureOutput():
             try:
                 #self.model = WhisperModel(self.model_path, device="cpu", compute_type="int8")
-                self.model = WhisperModel("medium", device="cpu", compute_type="int8");
+                self.model = WhisperModel("medium", device="cuda", compute_type="int8");
 
-                segments, info = self.model.transcribe("music/audio.mp3")
+                segments, info = self.model.transcribe("music/audio.mp3", beam_size=5, language="bg", condition_on_previous_text=True)
                 for segment in segments:
                     print("[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
+                    print("Detected language '%s' with probability %f" % (info.language, info.language_probability))
                 
-
-                #result = self.model.transcribe("audio.mp3")
-                #print(result["text"])
+      
+                
 
 
             except Exception as e:
@@ -144,6 +146,9 @@ class ASRProvider(ASRProviderBase):
             def _transcribe(path):
                 try:
                     ret = self.model.transcribe(path)
+
+                    info = ret[1]
+                    print("Detected lang '%s' with probability %f" % (info.language, info.language_probability))
                 except TypeError:
                     # Some versions use keyword args
                     ret = self.model.transcribe(audio=path)
